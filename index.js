@@ -5,6 +5,8 @@ import TelegramBot from 'node-telegram-bot-api'
 const { BOT_TOKEN, GROUP_ID } = process.env
 const bot = new TelegramBot(BOT_TOKEN, { polling: true })
 
+console.log('Tholdier bot started')
+
 const getMemeImage = msg => {
   const filePath = `memes/${msg}.jpg`
   const fileExists = fs.existsSync(filePath)
