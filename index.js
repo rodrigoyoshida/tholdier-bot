@@ -4,18 +4,9 @@ import TelegramBot from 'node-telegram-bot-api'
 
 const { BOT_TOKEN, GROUP_ID } = process.env
 const bot = new TelegramBot(BOT_TOKEN, { polling: true })
+const memeList = []
 
 console.log('Tholdier bot started')
-
-const getMemeImage = msg => {
-  const filePath = `memes/${msg}.jpg`
-  const fileExists = fs.existsSync(filePath)
-
-  if (fileExists) {
-    const buffer = fs.readFileSync(filePath)
-    return buffer
-  }
-}
 
 const isChatAllowed = (fromId, chatId) => {
   if (
@@ -26,17 +17,40 @@ const isChatAllowed = (fromId, chatId) => {
   }
 }
 
+const getMemeFile = msg => {
+  const extList = [
+    { ext: 'jpg', method: 'sendPhoto' },
+    { ext: 'png', method: 'sendPhoto' },
+    { ext: 'gif', method: 'sendAnimation' },
+    { ext: 'mp4', method: 'sendAnimation' },
+  ]
+
+  for (const { ext, method } of extList) {
+    const filePath = memeList.find(meme => {
+      const hasFullName = meme === `${msg}.${ext}`
+      const hasShortName = meme.replaceAll('_', '') === `${msg}.${ext}`
+      return hasFullName || hasShortName
+    })
+
+    if (filePath) {
+      const file = fs.readFileSync(`memes/${filePath}`)
+      return { method, file }
+    }
+  }
+}
+
 bot.onText(/\/meme/, async ({
   from: { id: fromId, username }, 
   chat: { id: chatId },
   text
 }) => {
   if (isChatAllowed(fromId, chatId)) {
-    const cleanMeme = text.split('meme').pop()
-    const memeImage = getMemeImage(cleanMeme)
-  
-    if (memeImage) {
-      await bot.sendPhoto(chatId, memeImage, { caption: `@${username}` })
+    const splitMeme = text.split('meme').pop()
+    const cleanMeme = splitMeme.substring(0, 1) === '_' ? splitMeme.replace('_', '') : splitMeme
+    const memeFile = getMemeFile(cleanMeme)
+
+    if (memeFile) {
+      await bot[memeFile.method](chatId, memeFile.file, { caption: `@${username}` })
     }
   }
 })
@@ -50,13 +64,16 @@ bot.onText(/\/listmemes/, ({
       bot.sendMessage(chatId, `hey @${username}, will DM you with the list`)
     }
   
-    const memeFiles = fs.readdirSync('memes')
     let message = '<b>Hey Tholdier!</b>\n'
-    message += 'Here are the thools for the batthle:\n\n'
-  
-    for (const memeFile of memeFiles) {
+    message += 'You can both call the memes from here '
+    message += 'or on the $Thol group. You can also '
+    message += 'call it by using the name without the '
+    message += 'underscore (_) to call if faster. \n\n'
+    message += 'Example: /meme_thend_it and /memethendit. \n\n'
+
+    for (const memeFile of memeList) {
       const memeName = memeFile.split('.')[0]
-      message += `/meme${memeName}\n`
+      message += `/meme_${memeName}\n`
     }
   
     bot.sendMessage(fromId, message, {
@@ -65,3 +82,13 @@ bot.onText(/\/listmemes/, ({
     })
   }
 })
+
+const loadMemeList = () => {
+  const memeFiles = fs.readdirSync('memes')
+
+  for (const memeFile of memeFiles) {
+    memeList.push(memeFile)
+  }
+}
+
+loadMemeList()
