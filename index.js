@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import TelegramBot from 'node-telegram-bot-api'
 import { refreshMemes } from './dropbox.js'
 
-const { BOT_TOKEN, GROUP_ID } = process.env
+const { BOT_TOKEN, GROUP_ID, DROPBOX_LIBRARY } = process.env
 const bot = new TelegramBot(BOT_TOKEN, { polling: true })
 let memeList = []
 
@@ -73,7 +73,7 @@ bot.onText(/\/listmemes/, ({
       message += 'want and run the command here using the filename. \n\n'
       message += '👉 Example: thend_it.jpg can be called using '
       message += '/meme_thend_it and /memethendit \n\n'
-      message += '📚 Here is the full meme library: https://www.dropbox.com/scl/fo/u48wcieg3pwol27350hot/h?rlkey=wztrj27g8yws7z8nf1ueqmfjo&dl=0 \n\n'
+      message += `📚 Here is the full meme library: ${DROPBOX_LIBRARY} \n\n`
     
       bot.sendMessage(fromId, message, {
         disable_web_page_preview: true,
