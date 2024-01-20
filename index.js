@@ -1,10 +1,11 @@
 import 'dotenv/config'
 import * as fs from 'fs'
 import TelegramBot from 'node-telegram-bot-api'
+import { refreshMemes } from './dropbox.js'
 
 const { BOT_TOKEN, GROUP_ID } = process.env
 const bot = new TelegramBot(BOT_TOKEN, { polling: true })
-const memeList = []
+let memeList = []
 
 console.log('Tholdier bot started')
 
@@ -44,14 +45,18 @@ bot.onText(/\/meme/, async ({
   chat: { id: chatId },
   text
 }) => {
-  if (isChatAllowed(fromId, chatId)) {
-    const splitMeme = text.split('meme').pop()
-    const cleanMeme = splitMeme.substring(0, 1) === '_' ? splitMeme.replace('_', '') : splitMeme
-    const memeFile = getMemeFile(cleanMeme)
-
-    if (memeFile) {
-      await bot[memeFile.method](chatId, memeFile.file, { caption: `@${username}` })
+  try {
+    if (isChatAllowed(fromId, chatId)) {
+      const splitMeme = text.split('meme').pop()
+      const cleanMeme = splitMeme.substring(0, 1) === '_' ? splitMeme.replace('_', '') : splitMeme
+      const memeFile = getMemeFile(cleanMeme)
+  
+      if (memeFile) {
+        await bot[memeFile.method](chatId, memeFile.file, { caption: `@${username}` })
+      }
     }
+  } catch (error) {
+    console.log('sendmeme', error.stack)
   }
 })
 
@@ -59,32 +64,48 @@ bot.onText(/\/listmemes/, ({
   from: { id: fromId, username }, 
   chat: { id: chatId }
 }) => {
-  if (isChatAllowed(fromId, chatId)) {
-    if (fromId !== chatId) {
-      bot.sendMessage(chatId, `hey @${username}, will DM you with the list`)
+  try {
+    if (isChatAllowed(fromId, chatId)) {
+      let message = `<b>🪖 Hey tholdierth @${username}!</b>\n\n`
+      message += 'You can post the memes here both by calling it with '
+      message += 'or without the underscore (_) to call if faster. '
+      message += 'Just check the meme library, choose the meme you '
+      message += 'want and run the command here using the filename. \n\n'
+      message += '👉 Example: thend_it.jpg can be called using '
+      message += '/meme_thend_it and /memethendit \n\n'
+      message += '📚 Here is the full meme library: https://www.dropbox.com/scl/fo/u48wcieg3pwol27350hot/h?rlkey=wztrj27g8yws7z8nf1ueqmfjo&dl=0 \n\n'
+    
+      bot.sendMessage(fromId, message, {
+        disable_web_page_preview: true,
+        parse_mode : 'HTML'
+      })
     }
-  
-    let message = '<b>Hey Tholdier!</b>\n'
-    message += 'You can both call the memes from here '
-    message += 'or on the $Thol group. You can also '
-    message += 'call it by using the name without the '
-    message += 'underscore (_) to call if faster. \n\n'
-    message += 'Example: /meme_thend_it and /memethendit. \n\n'
+  } catch (error) {
+    console.log('listmemes', error.stack)
+  }
+})
 
-    for (const memeFile of memeList) {
-      const memeName = memeFile.split('.')[0]
-      message += `/meme_${memeName}\n`
-    }
+bot.onText(/\/refreshmemes/, async ({
+  from: { id: fromId, username }, 
+  chat: { id: chatId }
+}) => {
+  try {
+    if (isChatAllowed(fromId, chatId)) {
+      bot.sendMessage(chatId, `@${username} started refreshing the meme list`)
   
-    bot.sendMessage(fromId, message, {
-      disable_web_page_preview: true,
-      parse_mode : 'HTML'
-    })
+      await refreshMemes(memeList)
+      loadMemeList()
+  
+      bot.sendMessage(chatId, `@${username} finished refreshing the meme list`)
+    }
+  } catch (error) {
+    console.log('refreshmemes', error.stack)
   }
 })
 
 const loadMemeList = () => {
   const memeFiles = fs.readdirSync('memes')
+  memeList = []
 
   for (const memeFile of memeFiles) {
     memeList.push(memeFile)
