@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import * as fs from 'fs'
 import TelegramBot from 'node-telegram-bot-api'
-import { refreshMemes } from './dropbox.js'
+import { downloadMemes } from './dropbox.js'
 
 const { BOT_TOKEN, GROUP_ID, DROPBOX_LIBRARY } = process.env
 const bot = new TelegramBot(BOT_TOKEN, { polling: true })
@@ -85,21 +85,36 @@ bot.onText(/\/listmemes/, ({
   }
 })
 
+bot.onText(/\/downloadmemes/, async ({
+  from: { id: fromId, username }, 
+  chat: { id: chatId }
+}) => {
+  try {
+    if (isChatAllowed(fromId, chatId)) {
+      bot.sendMessage(chatId, `@${username} starting downloading the meme list`)
+      await downloadMemes(memeList)
+
+      setTimeout(() => {
+        bot.sendMessage(chatId, `@${username} finished downloading the meme list\n`)
+        bot.sendMessage(chatId, `run the /refreshmemes for them to become available`)
+      }, 3000)
+    }
+  } catch (error) {
+    console.log('downloadMemes', error.stack)
+  }
+})
+
 bot.onText(/\/refreshmemes/, async ({
   from: { id: fromId, username }, 
   chat: { id: chatId }
 }) => {
   try {
     if (isChatAllowed(fromId, chatId)) {
-      bot.sendMessage(chatId, `@${username} started refreshing the meme list`)
-  
-      await refreshMemes(memeList)
       loadMemeList()
-  
-      bot.sendMessage(chatId, `@${username} finished refreshing the meme list`)
+      bot.sendMessage(chatId, `@${username} meme list was updated`)
     }
   } catch (error) {
-    console.log('refreshmemes', error.stack)
+    console.log('downloadMemes', error.stack)
   }
 })
 

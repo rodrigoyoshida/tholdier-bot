@@ -50,7 +50,7 @@ const getImageList = async () => {
 }
 
 const downloadImage = async name => {
-  await dropbox({
+  const res = await dropbox({
     method: 'post',
     url: 'https://content.dropboxapi.com/2/files/download',
     responseType: 'stream',
@@ -59,12 +59,12 @@ const downloadImage = async name => {
       'Content-Type': 'text/plain',
       'Dropbox-API-Arg': `{ "path": "/memes/${name}" }`
     }
-  }).then(res => {
-    res.data.pipe(fs.createWriteStream(`./memes/${name}`));
   })
+
+  await res.data.pipe(fs.createWriteStream(`./memes/${name}`))
 }
 
-export const refreshMemes = async memeList => {
+export const downloadMemes = async memeList => {
   const serverList = await getImageList()
 
   for (const serverMeme of serverList) {
