@@ -9,6 +9,13 @@ let memeList = []
 
 console.log('Tholdier bot started')
 
+const allowedExtensions = [
+  { ext: 'jpg', method: 'sendPhoto' },
+  { ext: 'png', method: 'sendPhoto' },
+  { ext: 'gif', method: 'sendAnimation' },
+  { ext: 'mp4', method: 'sendAnimation' },
+]
+
 const isChatAllowed = (fromId, chatId) => {
   if (
     fromId === chatId ||
@@ -19,14 +26,7 @@ const isChatAllowed = (fromId, chatId) => {
 }
 
 const getMemeFile = msg => {
-  const extList = [
-    { ext: 'jpg', method: 'sendPhoto' },
-    { ext: 'png', method: 'sendPhoto' },
-    { ext: 'gif', method: 'sendAnimation' },
-    { ext: 'mp4', method: 'sendAnimation' },
-  ]
-
-  for (const { ext, method } of extList) {
+  for (const { ext, method } of allowedExtensions) {
     const filePath = memeList.find(meme => {
       const hasFullName = meme === `${msg}.${ext}`
       const hasShortName = meme.replaceAll('_', '') === `${msg}.${ext}`
@@ -48,7 +48,8 @@ bot.onText(/\/meme/, async ({
   try {
     if (isChatAllowed(fromId, chatId)) {
       const splitMeme = text.split('meme').pop()
-      const cleanMeme = splitMeme.substring(0, 1) === '_' ? splitMeme.replace('_', '') : splitMeme
+      const firstCharMeme = splitMeme.substring(0, 1) === '_' ? splitMeme.replace('_', '') : splitMeme
+      const cleanMeme = firstCharMeme.toLowerCase()
       const memeFile = getMemeFile(cleanMeme)
   
       if (memeFile) {
@@ -71,7 +72,7 @@ bot.onText(/\/listmemes/, ({
       message += 'or without the underscore (_) to call if faster. '
       message += 'Just check the meme library, choose the meme you '
       message += 'want and run the command here using the filename. \n\n'
-      message += '👉 Example: thend_it.jpg can be called using '
+      message += '👉 Example: "Thend it.jpg" can be called using '
       message += '/meme_thend_it and /memethendit \n\n'
       message += `📚 Here is the full meme library: ${DROPBOX_LIBRARY} \n\n`
     
@@ -91,27 +92,14 @@ bot.onText(/\/downloadmemes/, async ({
 }) => {
   try {
     if (isChatAllowed(fromId, chatId)) {
-      bot.sendMessage(chatId, `@${username} starting downloading the meme list`)
-      await downloadMemes(memeList)
+      bot.sendMessage(chatId, `@${username} starting downloading the new memes... `)
+      await downloadMemes(memeList, allowedExtensions)
 
       setTimeout(() => {
-        bot.sendMessage(chatId, `@${username} finished downloading the meme list\n`)
-        bot.sendMessage(chatId, `run the /refreshmemes for them to become available`)
-      }, 3000)
-    }
-  } catch (error) {
-    console.log('downloadMemes', error.stack)
-  }
-})
-
-bot.onText(/\/refreshmemes/, async ({
-  from: { id: fromId, username }, 
-  chat: { id: chatId }
-}) => {
-  try {
-    if (isChatAllowed(fromId, chatId)) {
-      loadMemeList()
-      bot.sendMessage(chatId, `@${username} meme list was updated`)
+        bot.sendMessage(chatId, `@${username} finished downloading the new memes, updating the list... \n`)
+        loadMemeList()
+        bot.sendMessage(chatId, `@${username} meme list was updated, the new files can be used with the bot`)
+      }, 5000)
     }
   } catch (error) {
     console.log('downloadMemes', error.stack)

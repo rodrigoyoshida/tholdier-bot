@@ -31,13 +31,30 @@ const refreshToken = async () => {
 }
 
 const getImageList = async () => {
+  const imageList = []
+  const folderData = await listFolder('/memes')
+  const subfoldersToList = [...folderData.subfolders]
+
+  imageList.push(...folderData.files)
+
+  for (const subfolder of subfoldersToList) {
+    const subfolderData = await listFolder(subfolder.path)
+
+    imageList.push(...subfolderData.files)
+    subfoldersToList.push(...subfolderData.subfolders)
+  }
+
+  return imageList
+}
+
+const listFolder = async folder => {
   const { data: { entries } } = await dropbox.post('https://api.dropboxapi.com/2/files/list_folder', {
     'include_deleted': false,
     'include_has_explicit_shared_members': false,
     'include_media_info': false,
     'include_mounted_folders': true,
     'include_non_downloadable_files': false,
-    'path': '/memes',
+    'path': folder,
     'recursive': false
   }, {
     headers: {
@@ -45,11 +62,19 @@ const getImageList = async () => {
     }
   })
 
-  const cleanList = entries.map(i => i.name)
-  return cleanList
+  const subfolders = entries
+    .filter(i => i['.tag'] === 'folder')
+    .map(i => ({ name: i.name, path: i.path_display }))
+
+  const files = entries
+    .filter(i => i['.tag'] === 'file' )
+    .map(i => ({ name: i.name, path: i.path_display }))
+
+  return { subfolders, files }
 }
 
-const downloadImage = async name => {
+const downloadImage = async ({ name, path }) => {
+  const cleanName = name.replace(' ', '_').toLowerCase()
   const res = await dropbox({
     method: 'post',
     url: 'https://content.dropboxapi.com/2/files/download',
@@ -57,18 +82,18 @@ const downloadImage = async name => {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'text/plain',
-      'Dropbox-API-Arg': `{ "path": "/memes/${name}" }`
+      'Dropbox-API-Arg': `{ "path": "${path}" }`
     }
   })
 
-  await res.data.pipe(fs.createWriteStream(`./memes/${name}`))
+  await res.data.pipe(fs.createWriteStream(`./memes/${cleanName}`))
 }
 
 export const downloadMemes = async memeList => {
   const serverList = await getImageList()
 
   for (const serverMeme of serverList) {
-    const memeAlreadyExists = memeList.find(localMeme => localMeme === serverMeme)
+    const memeAlreadyExists = memeList.find(localMeme => localMeme === serverMeme.name)
 
     if (!memeAlreadyExists) {
       await downloadImage(serverMeme)
@@ -76,9 +101,9 @@ export const downloadMemes = async memeList => {
   }
 
   for (const localMeme of memeList) {
-    const memeIsInDropbox = serverList.find(serverMeme => serverMeme === localMeme)
+    const memeIsInServer = serverList.find(serverMeme => serverMeme.name === localMeme)
 
-    if (!memeIsInDropbox) {
+    if (!memeIsInServer) {
       fs.unlinkSync(`./memes/${localMeme}`)
     }
   }
