@@ -89,13 +89,15 @@ const downloadImage = async ({ name, path }) => {
   await res.data.pipe(fs.createWriteStream(`./memes/${cleanName}`))
 }
 
-export const downloadMemes = async memeList => {
+export const downloadMemes = async (memeList, allowedExtensions) => {
   const serverList = await getImageList()
 
   for (const serverMeme of serverList) {
     const memeAlreadyExists = memeList.find(localMeme => localMeme === serverMeme.name)
+    const fileExt = serverMeme.name.substr(-3).toLowerCase()
+    const isAllowedExt = allowedExtensions.find(i => i.ext === fileExt)
 
-    if (!memeAlreadyExists) {
+    if (!memeAlreadyExists && isAllowedExt) {
       await downloadImage(serverMeme)
     }
   }
