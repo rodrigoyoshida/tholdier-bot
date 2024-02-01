@@ -106,6 +106,18 @@ bot.onText(/\/downloadmemes/, async ({
   }
 })
 
+const sendRandomMeme = async () => {
+  const randomIndex = Math.floor(Math.random() * memeList.length)
+  const randomMeme = memeList[randomIndex]
+  const memeExtension = randomMeme.substr(-3)
+  const memeFile = fs.readFileSync(`memes/${randomMeme}`)
+  const memeMethod = allowedExtensions.find(e => e.ext === memeExtension).method
+
+  if (memeFile) {
+    await bot[memeMethod](GROUP_ID, memeFile)
+  }
+}
+
 const loadMemeList = () => {
   const memeFiles = fs.readdirSync('memes')
   memeList = []
@@ -116,3 +128,7 @@ const loadMemeList = () => {
 }
 
 loadMemeList()
+
+setInterval(async () => {
+  await sendRandomMeme()
+}, 60000)
