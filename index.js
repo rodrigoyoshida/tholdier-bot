@@ -76,7 +76,7 @@ bot.onText(/\/listmemes/, ({
       message += '/meme_thend_it and /memethendit \n\n'
       message += `📚 Here is the full meme library: ${DROPBOX_LIBRARY} \n\n`
     
-      bot.sendMessage(fromId, message, {
+      bot.sendMessage(chatId, message, {
         disable_web_page_preview: true,
         parse_mode : 'HTML'
       })
