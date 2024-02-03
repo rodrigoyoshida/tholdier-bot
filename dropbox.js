@@ -74,7 +74,7 @@ const listFolder = async folder => {
 }
 
 const downloadImage = async ({ name, path }) => {
-  const cleanName = name.replace(' ', '_').toLowerCase()
+  const cleanName = name.replaceAll(' ', '_').toLowerCase()
   const res = await dropbox({
     method: 'post',
     url: 'https://content.dropboxapi.com/2/files/download',

@@ -106,6 +106,13 @@ bot.onText(/\/downloadmemes/, async ({
   }
 })
 
+const commandByMemeFile = filename => {
+  console.log(filename)
+  const fileWithoutExt = filename.substr(0, filename.length - 4)
+  const command = `/meme_${fileWithoutExt}`
+  return command
+}
+
 const sendRandomMeme = async () => {
   const randomIndex = Math.floor(Math.random() * memeList.length)
   const randomMeme = memeList[randomIndex]
@@ -114,7 +121,8 @@ const sendRandomMeme = async () => {
   const memeMethod = allowedExtensions.find(e => e.ext === memeExtension).method
 
   if (memeFile) {
-    await bot[memeMethod](GROUP_ID, memeFile)
+    const command = commandByMemeFile(randomMeme)
+    await bot[memeMethod](GROUP_ID, memeFile, { caption: command })
   }
 }
 
@@ -131,4 +139,4 @@ loadMemeList()
 
 setInterval(async () => {
   await sendRandomMeme()
-}, 60000)
+}, 240000)
