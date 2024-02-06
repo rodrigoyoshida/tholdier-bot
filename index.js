@@ -108,7 +108,6 @@ bot.onText(/\/downloadmemes/, async ({
 })
 
 const commandByMemeFile = filename => {
-  console.log(filename)
   const fileWithoutExt = filename.substr(0, filename.length - 4)
   const command = `/meme_${fileWithoutExt}`
   return command
