@@ -5,6 +5,7 @@ import { downloadMemes } from './dropbox.js'
 
 const { BOT_TOKEN, GROUP_ID, DROPBOX_LIBRARY } = process.env
 const bot = new TelegramBot(BOT_TOKEN, { polling: true })
+const lastSentMemes = []
 let memeList = []
 
 console.log('Tholdier bot started')
@@ -113,11 +114,31 @@ const commandByMemeFile = filename => {
   return command
 }
 
+const getRandomMeme = async () => {
+  let randomMeme
+
+  while (!randomMeme) {
+    const randomIndex = Math.floor(Math.random() * memeList.length)
+    const possibleRandomMeme = memeList[randomIndex]
+
+    if (!lastSentMemes.includes(possibleRandomMeme)) {
+      randomMeme = possibleRandomMeme
+    }
+  }
+
+  if (lastSentMemes.length === 5) {
+    lastSentMemes.shift()
+  }
+
+  lastSentMemes.push(randomMeme)
+
+  return randomMeme
+}
+
 const sendRandomMeme = async () => {
   try {
     if (memeList.length) {
-      const randomIndex = Math.floor(Math.random() * memeList.length)
-      const randomMeme = memeList[randomIndex]
+      const randomMeme = getRandomMeme()
       const memeExtension = randomMeme.substr(-3)
       const memeFile = fs.readFileSync(`memes/${randomMeme}`)
       const memeMethod = allowedExtensions.find(e => e.ext === memeExtension).method
@@ -145,4 +166,4 @@ loadMemeList()
 
 setInterval(async () => {
   await sendRandomMeme()
-}, 240000)
+}, 360000)
