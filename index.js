@@ -113,7 +113,7 @@ const commandByMemeFile = filename => {
   return command
 }
 
-const getRandomMeme = async () => {
+const getRandomMeme = () => {
   let randomMeme
 
   while (!randomMeme) {
