@@ -12,6 +12,7 @@ console.log('Tholdier bot started')
 
 const allowedExtensions = [
   { ext: 'jpg', method: 'sendPhoto' },
+  { ext: 'jpeg', method: 'sendPhoto' },
   { ext: 'png', method: 'sendPhoto' },
   { ext: 'gif', method: 'sendAnimation' },
   { ext: 'mp4', method: 'sendAnimation' },
@@ -125,7 +126,7 @@ const getRandomMeme = () => {
     }
   }
 
-  if (lastSentMemes.length === 5) {
+  if (lastSentMemes.length === 10) {
     lastSentMemes.shift()
   }
 
