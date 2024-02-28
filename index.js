@@ -126,7 +126,7 @@ const getRandomMeme = () => {
     }
   }
 
-  if (lastSentMemes.length === 10) {
+  if (lastSentMemes.length === 15) {
     lastSentMemes.shift()
   }
 
