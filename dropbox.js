@@ -32,7 +32,7 @@ const refreshToken = async () => {
 
 const getImageList = async () => {
   const imageList = []
-  const folderData = await listFolder('/memes')
+  const folderData = await listFolder('/tholdier-bot-memes')
   const subfoldersToList = [...folderData.subfolders]
 
   imageList.push(...folderData.files)
