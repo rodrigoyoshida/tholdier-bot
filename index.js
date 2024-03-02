@@ -166,4 +166,4 @@ loadMemeList()
 
 setInterval(async () => {
   await sendRandomMeme()
-}, 420000)
+}, 480000)
