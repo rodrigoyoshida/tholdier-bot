@@ -74,7 +74,6 @@ const listFolder = async folder => {
 }
 
 const downloadImage = async ({ name, path }) => {
-  const cleanName = name.replaceAll(' ', '_').toLowerCase()
   const res = await dropbox({
     method: 'post',
     url: 'https://content.dropboxapi.com/2/files/download',
@@ -86,27 +85,41 @@ const downloadImage = async ({ name, path }) => {
     }
   })
 
-  await res.data.pipe(fs.createWriteStream(`./memes/${cleanName}`))
+  await res.data.pipe(fs.createWriteStream(`./memes/${name}`))
 }
 
 export const downloadMemes = async (memeList, allowedExtensions) => {
   const serverList = await getImageList()
+  let downloaded = 0
+  let deleted = 0
 
   for (const serverMeme of serverList) {
-    const memeAlreadyExists = memeList.find(localMeme => localMeme === serverMeme.name)
-    const fileExt = serverMeme.name.substr(-3).toLowerCase()
-    const isAllowedExt = allowedExtensions.find(i => i.ext === fileExt)
+    const cleanName = serverMeme.name.replaceAll(' ', '_').toLowerCase()
+    const memeAlreadyExists = memeList.find(localMeme => localMeme === cleanName)
+    const fileExt = serverMeme.name.split('.').slice(-1)[0].toLowerCase()
+    const isAllowedExt = allowedExtensions.some(i => i.ext === fileExt)
 
     if (!memeAlreadyExists && isAllowedExt) {
-      await downloadImage(serverMeme)
+      await downloadImage({ name: cleanName, path: serverMeme.path })
+      downloaded++
     }
   }
 
   for (const localMeme of memeList) {
-    const memeIsInServer = serverList.find(serverMeme => serverMeme.name === localMeme)
+    const memeIsInServer = serverList.find(serverMeme => {
+      const cleanName = serverMeme.name.replaceAll(' ', '_').toLowerCase()
+      return cleanName === localMeme
+    })
 
     if (!memeIsInServer) {
       fs.unlinkSync(`./memes/${localMeme}`)
+      deleted++
     }
+  }
+
+  return {
+    memesOnServer: serverList.length,
+    downloaded,
+    deleted
   }
 }

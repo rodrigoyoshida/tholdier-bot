@@ -95,12 +95,11 @@ bot.onText(/\/downloadmemes/, async ({
   try {
     if (isChatAllowed(fromId, chatId)) {
       bot.sendMessage(chatId, `@${username} starting downloading the new memes... `)
-      await downloadMemes(memeList, allowedExtensions)
+      const { memesOnServer, downloaded, deleted } = await downloadMemes(memeList, allowedExtensions)
 
       setTimeout(() => {
-        bot.sendMessage(chatId, `@${username} finished downloading the new memes, updating the list... \n`)
         loadMemeList()
-        bot.sendMessage(chatId, `@${username} meme list was updated, the new files can be used with the bot`)
+        bot.sendMessage(chatId, `@${username} ${memesOnServer} memes found on server, ${downloaded} new memes downloaded and ${deleted} deleted`)
       }, 5000)
     }
   } catch (error) {
