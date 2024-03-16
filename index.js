@@ -2,6 +2,7 @@ import 'dotenv/config'
 import * as fs from 'fs'
 import TelegramBot from 'node-telegram-bot-api'
 import { downloadMemes } from './dropbox.js'
+import Jimp from 'jimp'
 
 const { BOT_TOKEN, GROUP_ID, DROPBOX_LIBRARY } = process.env
 const bot = new TelegramBot(BOT_TOKEN, { polling: true })
@@ -104,6 +105,40 @@ bot.onText(/\/downloadmemes/, async ({
     }
   } catch (error) {
     console.log('downloadMemes', error.stack)
+  }
+})
+
+bot.onText(/\/homeless {1}.*/, async ({
+  text,
+  from: { id: fromId, username }, 
+  chat: { id: chatId }
+}) => {
+  try {
+    if (isChatAllowed(fromId, chatId)) {
+      const fullText = text.substring(10)
+      const splitText = fullText.split(' ')
+      const halfPos = Math.ceil(splitText.length / 2)
+      const halfIndex = fullText.indexOf(splitText[halfPos])
+      const firstText = fullText.substring(0, halfIndex).trim()
+      const secondText = fullText.substring(halfIndex).trim()
+  
+      const tholmeleth = await Jimp.read('images/tholmeleth.png')
+      const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK)
+  
+      const firstTextWidth = Jimp.measureText(font, firstText)
+      const firstTextX = (474 - firstTextWidth) / 2
+      await tholmeleth.print(font, firstTextX, 375, firstText)
+  
+      const secondTextWidth = Jimp.measureText(font, secondText)
+      const secondTextX = (474 - secondTextWidth) / 2
+      await tholmeleth.print(font, secondTextX, 415, secondText)
+
+      const finalImage = await tholmeleth.getBufferAsync(Jimp.MIME_PNG)
+
+      bot.sendPhoto(chatId, finalImage, { caption: `@${username}` })
+    }
+  } catch (error) {
+    console.log('homeless', error.stack)
   }
 })
 
