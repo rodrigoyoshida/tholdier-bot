@@ -198,6 +198,6 @@ const loadMemeList = () => {
 
 loadMemeList()
 
-setInterval(async () => {
-  await sendRandomMeme()
-}, 480000)
+// setInterval(async () => {
+//   await sendRandomMeme()
+// }, 480000)
